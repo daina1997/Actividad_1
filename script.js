@@ -9,7 +9,7 @@ export default class Carrito {
     actualizarUnidades(SKU, unidades) {
         if (this.productos.has(SKU)) {
             const prod = this.productos.get(SKU);
-            if (typeof unidades === 'number') { //Nos aseguramos que unidades sea un numero
+            if (typeof unidades === 'number' && !isNaN(unidades)) { //Nos aseguramos que unidades sea un numero
                 prod.quantity = unidades;
                 this.productos.set(SKU, prod);
                 return "Unidades actualizadas"
@@ -118,25 +118,25 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
             cantidad.addEventListener('click', () => { //Cuando hacemos click en el input para escribir nueva cantidad, se pone la casilla en blanco
                 const nuevaCant = '';
-                cantidad.value = nuevaCant;
+                cantidad.value = nuevaCant; //Esta variable no queremos convertirla a número por ejemplo.
                 miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
                 total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
                 cargarCarrito(miCarrito, moneda);
             });
 
             cantidad.addEventListener('blur', () => { //Cuando quitamos el foco en esa casilla queremos que:
-                if (!isNaN(cantidad.value) && cantidad.value !== '') { //Cuando sea un número, se mantenga esa cantidad
-                    const nuevaCant = cantidad.value;
-                    miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
-                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
-                    cargarCarrito(miCarrito, moneda);
+                if (!isNaN(cantidad.value) && cantidad.value !== '') { //SI es un número, se mantenga esa cantidad
+                     const nuevaCant = parseInt(cantidad.value, 10); //Indicamos que es un número de base decimal para que se puedan realizar correctamente los cálculos
+                     miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
+                     cantidad.value = nuevaCant; 
+                    
                 } else { //Pero cuando no lo sea, se ponga la casilla a 0.
-                    const nuevaCant = 0;
-                    cantidad.value = nuevaCant;
-                    miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
-                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
-                    cargarCarrito(miCarrito, moneda);
+                    cantidad.value = 0;
+                    miCarrito.actualizarUnidades(producto.SKU, 0);
+                    
                 }
+                total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
+                cargarCarrito(miCarrito, moneda);
             });
 
             cantidad.addEventListener('input', () => { //Cuando modifiquemos el contenido de input
@@ -147,8 +147,11 @@ document.addEventListener('DOMContentLoaded', function (event) {
                     total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
                     cargarCarrito(miCarrito, moneda);
                 } else {
-                    // REn cambio si no lo es usamos una expresión regular para substituir cualquier carácter no numérico por una cadena una en blanco (para que se resetee la casilla automáticamente).
+                    // En cambio si no lo es usamos una expresión regular para substituir cualquier carácter no numérico por una cadena una en blanco (para que se resetee la casilla automáticamente). y actualiza el carrito.
                     cantidad.value = cantidad.value.replace(/[^0-9]/g, '');
+                    miCarrito.actualizarUnidades(producto.SKU, cantidad.value);
+                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
+                    cargarCarrito(miCarrito, moneda);
                     
                     
                 }
