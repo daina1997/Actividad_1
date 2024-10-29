@@ -9,9 +9,13 @@ export default class Carrito {
     actualizarUnidades(SKU, unidades) {
         if (this.productos.has(SKU)) {
             const prod = this.productos.get(SKU);
-            prod.quantity = unidades;
-            this.productos.set(SKU, prod);
-            return "Unidades actualizadas"
+            if (typeof unidades === 'number') { //Nos aseguramos que unidades sea un numero
+                prod.quantity = unidades;
+                this.productos.set(SKU, prod);
+                return "Unidades actualizadas"
+            } else {
+                prod.quantity = 0;
+            }
         } else {
             return "Producto no existe en el carrito"
         }
@@ -103,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
             //Funcionalidad btn y input:
             
-            btnDecr.addEventListener('click',()=> { //
+            btnDecr.addEventListener('click',()=> { //Cuando suceda un evento click en btnDecr queremos que se ejecute lo siguiente:
                 const nuevaCant = Math.max(0,parseInt(cantidad.value) - 1); //Usamos Math.max para asegurarnos que no disminuye de 0. Porque siempre devolverá el número mayor y siempre que el otro sea negativo devolverá 0.
                 cantidad.value = nuevaCant; //Usamos parseInt para convertir el valor de cantidad a int.
                 miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
@@ -112,14 +116,45 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 cargarCarrito(miCarrito, moneda); //Pasamos la información actualizada a la función cargarCarrito para que se ejecute si cumple los requisitos.
             });
 
-            cantidad.addEventListener('input', () => {
-                const nuevaCant = Math.max(0, parseInt(cantidad.value)) || 0; //Ponemos || 0 para que en caso de que no se introduzca un número, no salga NaN y salga 0 por defecto.
+            cantidad.addEventListener('click', () => { //Cuando hacemos click en el input para escribir nueva cantidad, se pone la casilla en blanco
+                const nuevaCant = '';
+                cantidad.value = nuevaCant;
                 miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
                 total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
-
                 cargarCarrito(miCarrito, moneda);
-            })
+            });
+
+            cantidad.addEventListener('blur', () => { //Cuando quitamos el foco en esa casilla queremos que:
+                if (!isNaN(cantidad.value) && cantidad.value !== '') { //Cuando sea un número, se mantenga esa cantidad
+                    const nuevaCant = cantidad.value;
+                    miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
+                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
+                    cargarCarrito(miCarrito, moneda);
+                } else { //Pero cuando no lo sea, se ponga la casilla a 0.
+                    const nuevaCant = 0;
+                    cantidad.value = nuevaCant;
+                    miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
+                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
+                    cargarCarrito(miCarrito, moneda);
+                }
+            });
+
+            cantidad.addEventListener('input', () => { //Cuando modifiquemos el contenido de input
+                // Verificamos si el valor del input es un número y si lo es realizamos la actualización de unidades.
+                if (!isNaN(cantidad.value) && cantidad.value !== '') {
+                    const nuevaCant = Math.max(0, parseInt(cantidad.value)) || 0; // Impedimos que sea inferior de 0
+                    miCarrito.actualizarUnidades(producto.SKU, nuevaCant);
+                    total.innerText = `${miCarrito.calcularTotal(producto.SKU)} ${moneda}`;
+                    cargarCarrito(miCarrito, moneda);
+                } else {
+                    // REn cambio si no lo es usamos una expresión regular para substituir cualquier carácter no numérico por una cadena una en blanco (para que se resetee la casilla automáticamente).
+                    cantidad.value = cantidad.value.replace(/[^0-9]/g, '');
+                    
+                    
+                }
+            });
             
+
             btnIncr.addEventListener('click', () => {
                 const nuevaCant = parseInt(cantidad.value) + 1;
                 cantidad.value = nuevaCant;
@@ -137,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
             //CELDA TOTAL
             const total = document.createElement('td');
-            total.innerText = (miCarrito.calcularTotal(producto.SKU)) + moneda; //Como la cantidad inicial del producto es 0, el total inicial es 0.00
+            total.innerText = (miCarrito.calcularTotal(producto.SKU)) +" "+ moneda; //Como la cantidad inicial del producto es 0, el total inicial es 0.00
 
 
 
